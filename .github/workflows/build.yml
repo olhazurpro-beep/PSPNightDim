@@ -10,32 +10,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: pspdev/pspdev:latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install PSPDEV toolchain
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential git libssl-dev wget
-        
-        wget --progress=dot:giga -O pspdev.tar.gz https://github.com/pspdev/pspdev/releases/download/latest/pspdev-ubuntu-latest.tar.gz
-        tar -xzf pspdev.tar.gz
-        sudo mv pspdev /opt/pspdev
-        rm pspdev.tar.gz
-        
     - name: Build plugin
       run: |
-        export PSPDEV=/opt/pspdev
+        export PSPDEV=/usr/local/pspdev
         export PATH=$PSPDEV/bin:$PATH
         
-        echo "=== PSPDEV PATH ==="
-        echo $PSPDEV
         echo "=== PSP-CONFIG ==="
         psp-config --pspsdk-path
-        echo "=== FILES ==="
-        ls -la
+        
         echo "=== BUILD ==="
         make clean || true
         make
@@ -43,7 +31,6 @@ jobs:
     - name: Check output
       run: |
         ls -la *.prx || echo "PRX not found!"
-        ls -la *.ini || echo "INI not found!"
         
     - name: Upload artifact
       if: success()
