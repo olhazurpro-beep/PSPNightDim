@@ -13,31 +13,46 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
       
     - name: Install PSPDEV toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake build-essential git libssl-dev
+        sudo apt-get install -y cmake build-essential git libssl-dev wget
         
-        wget -q https://github.com/pspdev/pspdev/releases/download/latest/pspdev-ubuntu-latest.tar.gz
-        tar -xzf pspdev-ubuntu-latest.tar.gz
+        # Скачиваем и устанавливаем PSPDEV
+        wget --progress=dot:giga -O pspdev.tar.gz https://github.com/pspdev/pspdev/releases/download/latest/pspdev-ubuntu-latest.tar.gz
+        tar -xzf pspdev.tar.gz
         sudo mv pspdev /opt/pspdev
+        rm pspdev.tar.gz
+        
+        # Проверяем, что всё на месте
+        ls -la /opt/pspdev/bin/
+        /opt/pspdev/bin/psp-config --pspsdk-path || true
         
     - name: Build plugin
       run: |
         export PSPDEV=/opt/pspdev
         export PATH=$PSPDEV/bin:$PATH
-        echo "=== Проверка ==="
-        which psp-config
+        
+        echo "=== PSPDEV PATH ==="
+        echo $PSPDEV
+        echo "=== PSP-CONFIG ==="
         psp-config --pspsdk-path
-        echo "=== Сборка ==="
+        echo "=== FILES ==="
+        ls -la
+        echo "=== BUILD ==="
         make clean || true
         make
         
+    - name: Check output
+      run: |
+        ls -la *.prx || echo "PRX not found!"
+        ls -la *.ini || echo "INI not found!"
+        
     - name: Upload artifact
       if: success()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.2.2
       with:
         name: nightdim-prx
         path: |
