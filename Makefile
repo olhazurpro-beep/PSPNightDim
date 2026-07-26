@@ -15,5 +15,7 @@ BUILD_PRX = 1
 EXTRA_TARGETS = EBOOT.PBP
 PSP_EBOOT_TITLE = NightDim
 
-PSPSDK = $(shell psp-config --pspsdk-path)
+# Путь к SDK (в Docker-образе pspdev)
+PSPSDK = /usr/local/pspdev/psp/sdk
+
 include $(PSPSDK)/lib/build.mak
