@@ -1,0 +1,52 @@
+name: Build NightDim PSP Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install PSPDEV toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential git libssl-dev
+        
+        wget -q https://github.com/pspdev/pspdev/releases/download/latest/pspdev-ubuntu-latest.tar.gz
+        tar -xzf pspdev-ubuntu-latest.tar.gz
+        sudo mv pspdev /opt/pspdev
+        echo "/opt/pspdev/bin" >> $GITHUB_PATH
+        
+    - name: Build plugin
+      run: |
+        export PSPDEV=/opt/pspdev
+        export PATH=$PSPDEV/bin:$PATH
+        make clean || true
+        make
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nightdim-prx
+        path: |
+          nightdim.prx
+          nightdim.ini
+        retention-days: 30
+        
+    - name: Create Release
+      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          nightdim.prx
+          nightdim.ini
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
